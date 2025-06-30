@@ -55,7 +55,7 @@ fn serve_file(path: &str, content_type: &str) -> Result<Response<Full<Bytes>>, I
 }
 
 fn serve_static_file(file_path: &str) -> Result<Response<Full<Bytes>>, Infallible> {
-    let path = PathBuf::from("frontend").join(file_path);
+    let path = PathBuf::from("../frontend/").join(file_path);
     match fs::read(&path) {
         Ok(contents) => {
             let mime = from_path(&path).first_or_octet_stream().as_ref().to_string();
@@ -70,14 +70,19 @@ fn serve_static_file(file_path: &str) -> Result<Response<Full<Bytes>>, Infallibl
     }
 }
 
-async fn handle_api(_req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
-    let html = "<div> Réponse HTMX arrive d'ici peu t'inquiètes </div>";
-    let mut response = Response::new(Full::from(Bytes::from(html)));
-    response.headers_mut().insert(
-            CONTENT_TYPE,
-            HeaderValue::from_static("text/html"),
-        );
-    Ok(response)
+async fn handle_api(req: Request<Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
+    match req.uri().path() {
+        "/api/hello" => {
+            let html = "<div>Salut, c'est la réponse HTMX du backend !</div>";
+            let mut response = Response::new(Full::from(Bytes::from(html)));
+            response.headers_mut().insert(
+                CONTENT_TYPE,
+                HeaderValue::from_static("text/html"),
+            );
+            Ok(response)
+        }
+        _ => Ok(not_found()),
+    }
 }
 
 fn not_found() -> Response<Full<Bytes>> {

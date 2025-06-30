@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gourmestre</title>
+  <script src="/static/htmx.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <h1>Bienvenue sur Gourmestre</h1>
+
+  <button hx-get="/api/hello" hx-target="#response" hx-swap="innerHTML">
+    Clique pour une réponse HTMX
+  </button>
+
+  <div id="response" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px;">
+    Ici la réponse du backend via HTMX apparaîtra.
+  </div>
+</body>
+</html>

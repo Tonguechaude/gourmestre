@@ -14,7 +14,7 @@ backend/target
 **/mutants.out*/
 
 # Do NOT push the .env file
-backend/.env
+.env
 
 #  !!! F*** I use vim !!!
 

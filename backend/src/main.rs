@@ -76,7 +76,12 @@ async fn router(
                         let row = client.query_one("SELECT username FROM users WHERE id = $1", &[&user_id]).await.unwrap();
                         let username: String = row.get("username");
 
-                        let html = format!("<h1>Bonjour, {username} !</h1>");
+                        let html = format!(r#"
+                            <h1>Bonjour, {username} !</h1>
+                            <form hx-post="/api/logout" hx-target="body">
+                            <button type="submit">Se déconnecter</button>
+                            </form>
+                        "#);
                         let mut res = Response::new(Full::from(Bytes::from(html)));
                         res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
                         return Ok(res);
@@ -245,6 +250,17 @@ async fn handle_api(
                     Ok(response)
                 }
             }
+        },
+        "/api/logout" => {
+            let mut response = Response::new(Full::from(Bytes::from(
+                r#"<script>window.location.href = "/login.html";</script>"#
+            )));
+            response.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+
+            let expired_cookie = "session=deleted; Path=/; Max-Age=0; HttpOnly";
+            response.headers_mut().insert("Set-Cookie", HeaderValue::from_static(expired_cookie));
+
+            Ok(response)
         },
         _ => Ok(not_found()),
     }

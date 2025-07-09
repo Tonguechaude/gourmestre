@@ -6,14 +6,34 @@
   <script src="/static/htmx.min.js"></script>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen gap-4">
-  <h1>Connexion</h1>
-  <form hx-post="/api/login" hx-target="#message" hx-swap="innerHTML" class="flex flex-col gap-2">
-    <input type="text" name="username" placeholder="Nom d'utilisateur" />
-    <input type="password" name="password" placeholder="Mot de passe" />
-    <button type="submit">Se connecter</button>
+<body class="flex flex-col items-center justify-center min-h-screen gap-6 bg-gray-50">
+
+  <h1 class="text-2xl font-bold text-gray-800">Connexion</h1>
+
+  <form hx-post="/api/login" hx-target="#message" hx-swap="innerHTML" class="flex flex-col gap-4 w-80">
+    <input
+      type="text"
+      name="username"
+      placeholder="Nom d'utilisateur"
+      class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+      required
+    />
+    <input
+      type="password"
+      name="password"
+      placeholder="Mot de passe"
+      class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+      required
+    />
+    <button
+      type="submit"
+      class="px-4 py-2 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition"
+    >
+      Se connecter
+    </button>
   </form>
-  <div id="message"></div>
+
+  <div id="message" class="text-center text-red-600 font-medium"></div>
+
 </body>
 </html>
-

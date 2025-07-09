@@ -13,86 +13,16 @@
     Bienvenue sur <span class="text-red-600">Gourmestre</span>
   </h1>
 
-  <a href="/login.html"><button>Connexion</button></a>
-  <a href="/register.html"><button>Créer un compte</button></a>
-
-
-
-
-
-
-
-
-
-  <button 
-    class="px-6 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700 transition"
-    hx-get="/api/hello" 
-    hx-target="#response" 
-    hx-swap="innerHTML">
-    Clique pour une réponse HTMX
-  </button>
-
-  <div id="response" class="w-full max-w-md bg-white shadow rounded p-4 text-center">
-    <!-- Réponse HTMX apparaîtra ici -->
-  </div>
-
-  <form 
-    class="w-full max-w-md bg-white shadow-md rounded px-8 pt-6 pb-8 space-y-4"
-    hx-post="/api/register" 
-    hx-target="#register-result" 
-    hx-swap="innerHTML">
-    
-    <input 
-      type="text" 
-      name="username" 
-      placeholder="Nom d'utilisateur" 
-      required 
-      class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-red-600" 
-    />
-    
-    <input 
-      type="password" 
-      name="password" 
-      placeholder="Mot de passe" 
-      required 
-      class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-red-600" 
-    />
-
-    <button 
-      type="submit" 
-      class="w-full bg-gray-800 text-white py-2 px-4 rounded hover:bg-gray-900 transition">
+  <a href="/login.html">
+    <button class="px-6 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 transition">
+      Connexion
+    </button>
+  </a>
+  <a href="/register.html">
+    <button class="px-6 py-2 rounded-md bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition">
       Créer un compte
     </button>
-  </form>
-
-  <div id="register-result" class="text-center text-red-600 font-medium"></div>
-
-  <h2 class="text-2xl font-bold text-gray-800">Connexion</h2>
-  <form hx-post="/api/login" hx-target="#login-response" hx-swap="innerHTML">
-    <input 
-      type="text" 
-      name="username" 
-      placeholder="Nom d'utilisateur" 
-      class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-red-600" 
-      required
-    />
-
-    <input
-      type="password"
-      name="password"
-      placeholder="Mot de passe"
-      class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-red-600"
-      required
-    />
-
-    <button
-      type="submit"
-      class="w-full bg-gray-800 text-white py-2 px-4 rounded hover:bg-gray-900 transition">
-      Se connecter
-    </button>
-  </form>
-
-  <div id="login-response" class="text-center text-red-600 font-medium"></div>
+  </a>
 
 </body>
 </html>

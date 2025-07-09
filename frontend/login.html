@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Connexion</title>
+  <script src="/static/htmx.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen gap-4">
+  <h1>Connexion</h1>
+  <form hx-post="/api/login" hx-target="#message" hx-swap="innerHTML" class="flex flex-col gap-2">
+    <input type="text" name="username" placeholder="Nom d'utilisateur" />
+    <input type="password" name="password" placeholder="Mot de passe" />
+    <button type="submit">Se connecter</button>
+  </form>
+  <div id="message"></div>
+</body>
+</html>
+

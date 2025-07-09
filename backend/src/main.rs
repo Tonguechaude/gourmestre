@@ -59,8 +59,47 @@ async fn router(
             serve_static_file(file)
         }
         path if path.starts_with("/api/") => handle_api(req, state).await,
+        "/dashboard" => {
+            let maybe_token = req.headers()
+                .get("cookie")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|cookie| {
+                    cookie.split(';')
+                        .find(|s| s.trim().starts_with("session="))
+                        .map(|s| s.trim().trim_start_matches("session=").to_string())
+                });
+
+            if let Some(token) = maybe_token {
+                match db::get_user_from_session(&state.db_pool, &token).await {
+                    Ok(Some(user_id)) => {
+                        let client = state.db_pool.get().await.unwrap();
+                        let row = client.query_one("SELECT username FROM users WHERE id = $1", &[&user_id]).await.unwrap();
+                        let username: String = row.get("username");
+
+                        let html = format!("<h1>Bonjour, {username} !</h1>");
+                        let mut res = Response::new(Full::from(Bytes::from(html)));
+                        res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+                        return Ok(res);
+                    },
+                    _ => return Ok(redirect_to_login()),
+                }
+            } else {
+                Ok(redirect_to_login())
+            }
+        },
+        path if path.ends_with(".html") => {
+            let path = format!("../frontend{path}");
+            serve_file(&path, "text/html")
+        },
         _ => Ok(not_found()),
     }
+}
+
+fn redirect_to_login() -> Response<Full<Bytes>> {
+    let html = r#"<script>window.location.href='/login.html';</script>"#;
+    let mut res = Response::new(Full::from(Bytes::from(html)));
+    res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+    res
 }
 
 fn serve_file(path: &str, content_type: &str) -> Result<Response<Full<Bytes>>, Infallible> {
@@ -143,6 +182,59 @@ async fn handle_api(
             match db::create_user(pool, &username, &password).await {
                 Ok(_) => {
                     let mut response = Response::new(Full::from(Bytes::from("✅ Compte créé avec succès !")));
+                    response.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+                    Ok(response)
+                },
+                Err(e) => {
+                    let msg = format!("❌ Erreur : {e}");
+                    let mut response = Response::new(Full::from(Bytes::from(msg)));
+                    response.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+                    Ok(response)
+                }
+            }
+        },
+        "/api/login" => {
+            let collected = req.into_body().collect().await.unwrap();
+            let whole_body: Bytes = collected.to_bytes();
+            let body_str = String::from_utf8_lossy(&whole_body);
+            let params: Vec<(&str, &str)> = body_str
+                .split('&')
+                .filter_map(|kv| {
+                    let mut split = kv.splitn(2, '=');
+                    Some((split.next()?, split.next()?))
+                })
+                .collect();
+
+            let mut username = "";
+            let mut password = "";
+
+            for (k, v) in params {
+                if k == "username" {
+                    username = v;
+                } else if k == "password" {
+                    password = v;
+                }
+            }
+
+            let username = urlencoding::decode(username).unwrap_or_default().to_string();
+            let password = urlencoding::decode(password).unwrap_or_default().to_string();
+
+            let pool = &state.db_pool;
+
+            match db::verify_user(pool, &username, &password).await {
+                Ok(true) => {
+                    let token = db::create_session(pool, &username).await.unwrap();
+
+                    let mut response = Response::new(Full::from(Bytes::from(r#"<script>window.location.href='/dashboard';</script>"#)));
+                    response.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+
+                    let cookie_value = format!("session={token}; Path=/; HttpOnly");
+                    response.headers_mut().insert("Set-Cookie", HeaderValue::from_str(&cookie_value).unwrap());
+
+                    Ok(response)
+                },
+                Ok(false) => {
+                    let mut response = Response::new(Full::from(Bytes::from("❌ Identifiants incorrects")));
                     response.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
                     Ok(response)
                 },

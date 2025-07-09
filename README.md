@@ -8,11 +8,18 @@
 
 ## Roadmap
 
-* create custom routes
-* Use HTTP/2
-* Use custom handle error
-* use .env
-* add the PostregSQL db
+-[x] create custom routes
+-[x] Use custom handle error
+-[x] use .env
+-[x] add the PostregSQL db
+-[ ] authentication management
+-[ ] session handler
+-[ ] dashboard for conected users
+-[ ] review data structure
+-[ ] unit and accaptance test
+-[ ] add a "bin.rs" to launch migrations or admin things
+-[ ] refacto with separated routes
+-[ ] Use HTTP/2
 
 ## PostgreSQL
 

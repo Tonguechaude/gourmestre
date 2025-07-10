@@ -71,27 +71,15 @@ async fn router(
 
             if let Some(token) = maybe_token {
                 match db::get_user_from_session(&state.db_pool, &token).await {
-                    Ok(Some(user_id)) => {
-                        let client = state.db_pool.get().await.unwrap();
-                        let row = client.query_one("SELECT username FROM users WHERE id = $1", &[&user_id]).await.unwrap();
-                        let username: String = row.get("username");
-
-                        let html = format!(r#"
-                            <h1>Bonjour, {username} !</h1>
-                            <form hx-post="/api/logout" hx-target="body">
-                            <button type="submit">Se déconnecter</button>
-                            </form>
-                        "#);
-                        let mut res = Response::new(Full::from(Bytes::from(html)));
-                        res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
-                        return Ok(res);
+                    Ok(Some(_user_id)) => {
+                        serve_file("../frontend/dashboard.html", "text/html")
                     },
-                    _ => return Ok(redirect_to_login()),
+                    _ => Ok(redirect_to_login()),
                 }
             } else {
                 Ok(redirect_to_login())
             }
-        },
+        }
         path if path.ends_with(".html") => {
             let path = format!("../frontend{path}");
             serve_file(&path, "text/html")
@@ -140,21 +128,35 @@ async fn handle_api(
     state: Arc<AppState>,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     match req.uri().path() {
-        "/api/hello" => {
-            let client = state.db_pool.get().await.unwrap();
-            let rows = client
-                .query("SELECT 'Bonjour depuis Postgres !' AS greeting", &[])
-                .await
-                .unwrap();
-            let greeting: &str = rows[0].get("greeting");
+        "/api/userinfo" => {
+            let maybe_token = req.headers()
+                .get("cookie")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|cookie| {
+                    cookie.split(';')
+                        .find(|s| s.trim().starts_with("session="))
+                        .map(|s| s.trim().trim_start_matches("session=").to_string())
+                });
 
-            let html = format!("<div>{greeting}</div>");
-            let mut response = Response::new(Full::from(Bytes::from(html)));
-            response.headers_mut().insert(
-                CONTENT_TYPE,
-                HeaderValue::from_static("text/html"),
-            );
-            Ok(response)
+            if let Some(token) = maybe_token {
+                if let Ok(Some(user_id)) = db::get_user_from_session(&state.db_pool, &token).await {
+                    let client = state.db_pool.get().await.unwrap();
+                    let row = client
+                        .query_one("SELECT username FROM users WHERE id = $1", &[&user_id])
+                        .await
+                        .unwrap();
+                    let username: String = row.get("username");
+
+                    let html = format!("👋 Bonjour, <strong>{username}</strong> !");
+                    let mut res = Response::new(Full::from(Bytes::from(html)));
+                    res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+                    return Ok(res);
+                }
+            }
+
+            let mut res = Response::new(Full::from(Bytes::from("Utilisateur inconnu.")));
+            res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
+            Ok(res)
         },
         "/api/register" => {
             let collected = req.into_body().collect().await.unwrap();

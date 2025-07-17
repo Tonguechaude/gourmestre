@@ -1,94 +1,208 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <title>Dashboard - Gourmestre</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/static/htmx.min.js"></script>
-</head>
-<body class="bg-gray-50 min-h-screen flex">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard - Gourmestre</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <script src="/static/htmx.min.js"></script> -->
+    <!-- <script src="/static/json-enc.js"></script> -->
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+.animate-fade-in {
+  animation: fadeIn 1.0s cubic-bezier(.4,0,.2,1);
+}
+              @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(16px);}
+                to { opacity: 1; transform: none;}
+              }
+              /* Pour cacher la scrollbar du layer modal */
+              .no-scrollbar::-webkit-scrollbar { display: none; }
+              .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen flex">
 
-  <!-- Sidebar -->
-  <aside class="w-64 min-h-screen bg-white border-r-4 border-rose-600 flex flex-col justify-between p-6 shadow-lg rounded-r-3xl
-                fixed md:static left-0 top-0 z-30">
+    <!-- Sidebar -->
+    <aside class="w-64 min-h-screen bg-white border-r-4 border-rose-600 flex flex-col justify-between p-6 shadow-lg rounded-r-3xl
+                  fixed md:static left-0 top-0 z-30">
 
-    <div>
-      <h1 class="text-3xl font-extrabold text-rose-600 mb-10 tracking-tight">Gourmestre</h1>
-      <nav aria-label="Menu principal">
-        <ul class="space-y-2">
-          <li>
-            <a href="#" class="block px-4 py-2 rounded-xl font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition">
-              Mes restaurants
-            </a>
-          </li>
-          <li>
-            <a href="#" class="block px-4 py-2 rounded-xl font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition">
-              Favoris
-            </a>
-          </li>
-          <li>
-            <a href="#" class="block px-4 py-2 rounded-xl font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition">
-              Profil
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-
-    <form action="/api/logout" method="post" class="pt-8">
-      <button type="submit"
-        class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-rose-600 rounded-xl font-medium transition shadow">
-        Se déconnecter
-      </button>
-    </form>
-  </aside>
-
-  <main class="flex-1 md:ml-64 p-6 md:p-12 space-y-10 transition-all">
-    
-    <section id="user-greeting">
-      <div id="welcome"
-           hx-get="/api/userinfo"
-           hx-trigger="load"
-           hx-swap="innerHTML"
-           class="text-3xl md:text-4xl font-semibold text-gray-800 animate-fade-in">
-        Chargement du profil...
+      <div>
+        <h1 class="text-3xl font-extrabold text-rose-600 mb-10 tracking-tight">Gourmestre</h1>
+        <nav aria-label="Menu principal">
+          <ul class="space-y-2">
+            <li>
+              <button type="button"
+                      onclick="showLayer('restaurants')"
+                      hx-get="/api/restaurants"
+                      hx-target="#restaurants-content"
+                      hx-swap="innerHTML"
+                      class="w-full text-left block px-4 py-2 rounded-xl font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition">
+                Mes restaurants
+              </button>
+            </li>
+            <li>
+              <button type="button" 
+                      onclick="showLayer('favoris')" 
+                      hx-get="/api/restaurants?favorites=true"
+                      hx-target="#favorites-content"
+                      hx-swap="innerHTML"
+                      class="w-full text-left block px-4 py-2 rounded-xl font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition">
+                Favoris
+              </button>
+            </li>
+            <li>
+              <button type="button" onclick="showLayer('profil')" class="w-full text-left block px-4 py-2 rounded-xl font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition">
+                Profil
+              </button>
+            </li>
+          </ul>
+        </nav>
       </div>
-    </section>
 
-    <section class="bg-white rounded-2xl shadow-lg p-8 md:max-w-3xl mx-auto border border-gray-100">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4 tracking-tight">Tableau de bord</h2>
-      <p class="text-base text-gray-500 mb-6">Bienvenue dans votre espace personnel</p>
-
-      <form hx-post="/api/restaurants" hx-target="#resto-msg" hx-swap="innerHTML" class="space-y-4 p-4 bg-gray-100 rounded-lg">
-        <input name="name" type="text" placeholder="Nom du restaurant" required />
-        <input name="city" type="text" placeholder="Ville" required />
-        <textarea name="description" placeholder="Avis (optionnel)"></textarea>
-        <label>
-          <input name="rating" type="number" min="1" max="5" /> Note (1–5)
-        </label>
-        <label>
-          <input name="is_favorite" type="checkbox" /> Favoris
-        </label>
-        <button type="submit">Ajouter</button>
+      <form action="/api/logout" method="post" class="pt-8">
+        <button type="submit"
+                class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-rose-600 rounded-xl font-medium transition shadow">
+          Se déconnecter
+        </button>
       </form>
-      <div id="resto-msg"></div>
+    </aside>
 
-      <ul class="list-disc pl-5 text-gray-700 space-y-2 text-base">
-        <li>Ajouter vos restaurants préférés</li>
-        <li>Gérer votre profil et vos avis</li>
-        <li>Suivre vos réservations</li>
-      </ul>
-    </section>
-  </main>
+    <main class="flex-1 p-2 md:p-8">
 
-  <style>
-    .animate-fade-in {
-      animation: fadeIn 1.0s cubic-bezier(.4,0,.2,1);
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(16px);}
-      to { opacity: 1; transform: none;}
-    }
-  </style>
-</body>
+      <section id="user-greeting" class="mb-3 md:mb-6 mt-4 md:mt-0">
+        <div id="welcome"
+             hx-get="/api/userinfo"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="text-3xl md:text-4xl font-semibold text-gray-800 animate-fade-in">
+          Chargement du profil...
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
+
+        <div class="lg:col-span-2">
+          <section class="relative flex-1 flex flex-col bg-white rounded-2xl shadow-xl border border-gray-100 p-4 md:p-10">
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 tracking-tight">Tableau de bord</h2>
+            <p class="text-base text-gray-500 mb-6">Bienvenue dans votre espace personnel</p>
+
+            <div class="flex-1 space-y-7">
+              <form hx-post="/api/restaurants" hx-ext="submitjson" hx-target="#resto-msg" hx-swap="innerHTML"
+                                                                                          class="space-y-4 p-4 bg-gray-50 rounded-xl shadow transition hover:shadow-md border border-gray-100 max-w-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input name="name" type="text" placeholder="Nom du restaurant" required
+                                                 class="px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition" />
+                  <input name="city" type="text" placeholder="Ville" required
+                                                 class="px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition" />
+                </div>
+                <textarea name="description" placeholder="Avis (optionnel)"
+                                             class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition"></textarea>
+                <div class="flex items-center gap-4">
+                  <label class="flex items-center gap-2">
+                    <input name="rating" type="number" min="1" max="5" class="w-16 px-2 py-1 rounded border border-gray-200" />
+                    <span class="text-gray-600 text-sm">Note (1–5)</span>
+                  </label>
+                  <label class="flex items-center gap-2">
+                    <input name="is_favorite" type="checkbox" class="rounded border border-gray-300 focus:ring-rose-400" />
+                    <span class="text-gray-600 text-sm">Favoris</span>
+                  </label>
+                </div>
+                <button type="submit" class="px-5 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition">Ajouter</button>
+              </form>
+              <div id="resto-msg" class="text-rose-600 font-medium"></div>
+            </div>
+
+            <div id="layer-restaurants" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl flex flex-col p-6 md:p-12 z-10 no-scrollbar overflow-auto animate-fade-in">
+              <button onclick="closeLayer()" class="self-end text-rose-600 hover:bg-gray-100 rounded-full p-2 transition" aria-label="Fermer">&times;</button>
+              <h3 class="text-xl font-bold mb-4 text-gray-800">Mes restaurants</h3>
+              <div id="restaurants-content" class="text-gray-600"><p>Chargement...</p></div>
+            </div>
+
+            <div id="layer-favoris" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl flex flex-col p-6 md:p-12 z-10 no-scrollbar overflow-auto animate-fade-in">
+              <button onclick="closeLayer()" class="self-end text-rose-600 hover:bg-gray-100 rounded-full p-2 transition" aria-label="Fermer">&times;</button>
+              <h3 class="text-xl font-bold mb-4 text-gray-800">Mes favoris</h3>
+              <div id="favorites-content" class="text-gray-600"><p>Chargement...</p></div>
+            </div>
+
+            <div id="layer-profil" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl flex flex-col p-6 md:p-12 z-10 no-scrollbar overflow-auto animate-fade-in">
+              <button onclick="closeLayer()" class="self-end text-rose-600 hover:bg-gray-100 rounded-full p-2 transition" aria-label="Fermer">&times;</button>
+              <h3 class="text-xl font-bold mb-4 text-gray-800">Profil</h3>
+              <div class="text-gray-600">Ici s'affichera la gestion du profil utilisateur.</div>
+            </div>
+
+          </section>
+        </div>
+
+        <div class="space-y-8 mt-8 lg:mt-0">
+
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <h3 class="font-bold text-lg mb-4">⭐ Derniers favoris</h3>
+            <div hx-get="/api/restaurants?favorites=true&limit=5"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+              <p class="text-sm text-gray-400">Chargement...</p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <h3 class="font-bold text-lg mb-4">🕒 Ajouts récents</h3>
+            <div hx-get="/api/restaurants?limit=5"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+              <p class="text-sm text-gray-400">Chargement...</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <script>
+      // Petite animation sympa pour les layers (ouvrir/fermer)
+      function showLayer(layer) {
+        closeLayer();
+        document.getElementById('layer-' + layer).classList.remove('hidden');
+      }
+      function closeLayer() {
+        ['restaurants', 'favoris', 'profil'].forEach(function(l) {
+          document.getElementById('layer-' + l).classList.add('hidden');
+        });
+      }
+    </script>
+
+    <!--
+      AMÉLIORATIONS :
+      - Le panel dashboard prend toute la place, il est centré et moderne, avec une ombre légère.
+      - Les "layers" s'ouvrent par dessus, façon panneau/overlay, pour une UX fluide sans recharger la page.
+      - Formulaire "Ajout rapide" modernisé, inputs plus accessibles et responsive.
+      - Responsive : le panel garde toujours une marge avec la sidebar, même sur mobile.
+      - Accessibilité : navigation par bouton, labels, aria-labels.
+      - Tu peux brancher htmx dans les layers pour charger dynamiquement le contenu sans JS custom.
+      - Pour une expérience mobile optimale, pense à ajouter un menu burger pour la sidebar si nécessaire !
+    -->
+
+    <script>
+      htmx.defineExtension('submitjson', {
+        onEvent: function (name, evt) {
+          if (name === "htmx:configRequest") {
+            evt.detail.headers['Content-Type'] = "application/json"
+            evt.detail.headers['X-API-Key'] = 'sjk_xxx'
+          }
+        },
+        encodeParameters: function(xhr, parameters, elt) {
+          xhr.overrideMimeType('text/json') // override default mime type
+          const body = { // set your request body
+            data: parameters,
+            options: { submissionFormat: 'pretty'}
+          }
+          return (JSON.stringify(body))
+        }
+      })
+    </script>
+  </body>
 </html>

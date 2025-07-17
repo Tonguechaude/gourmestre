@@ -4,6 +4,8 @@ use bcrypt::{hash, DEFAULT_COST};
 use bcrypt::verify;
 use uuid::Uuid;
 
+use crate::models::{NewRestaurant, Restaurant};
+
 pub async fn create_pool() -> Pool {
     dotenvy::dotenv().ok();
 
@@ -73,5 +75,40 @@ pub async fn get_user_from_session(pool: &Pool, token: &str) -> Result<Option<i3
         .await?;
 
     Ok(row.map(|r| r.get("user_id")))
+}
+
+pub async fn get_restaurants_for_user(pool: &Pool, user_id: i32, favorites_only: bool, limit: Option<i64>) -> Result<Vec<Restaurant>, Box<dyn std::error::Error + Send + Sync>> {
+    let client = pool.get().await?;
+    
+    let mut query = "SELECT * FROM restaurants WHERE owner_id = $1".to_string();
+    if favorites_only {
+        query.push_str(" AND is_favorite = TRUE");
+    }
+    query.push_str(" ORDER BY created_at DESC");
+
+    // Si une limite est spécifiée, on l'ajoute à la requête
+    if let Some(l) = limit {
+        query.push_str(&format!(" LIMIT {}", l));
+    }
+
+    let rows = client
+        .query(&query, &[&user_id])
+        .await?;
+
+    let restaurants = rows.into_iter().map(Restaurant::from).collect();
+
+    Ok(restaurants)
+}
+
+pub async fn create_restaurant(pool: &Pool, user_id: i32, new_restaurant: &NewRestaurant) -> Result<Restaurant, Box<dyn std::error::Error + Send + Sync>> {
+    let client = pool.get().await?;
+    let row = client
+        .query_one(
+            "INSERT INTO restaurants (owner_id, name, city, rating, description, is_favorite) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+            &[&user_id, &new_restaurant.name, &new_restaurant.city, &new_restaurant.rating, &new_restaurant.description, &new_restaurant.is_favorite],
+        )
+        .await?;
+
+    Ok(Restaurant::from(row))
 }
 

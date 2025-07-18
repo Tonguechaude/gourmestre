@@ -388,6 +388,7 @@ async fn handle_api(
                                     let mut res = Response::new(Full::from(Bytes::from(json)));
                                     *res.status_mut() = StatusCode::CREATED;
                                     res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+                                    res.headers_mut().insert("HX-Trigger", HeaderValue::from_static("restaurant-added"));
                                     Ok(res)
                                 },
                                 Err(_) => {

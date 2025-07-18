@@ -150,7 +150,7 @@
             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
               <h3 class="font-bold text-lg mb-4">⭐ Derniers favoris</h3>
               <div hx-get="/api/restaurants?favorites=true&limit=5"
-                   hx-trigger="load"
+                   hx-trigger="load restaurant-added from:body"
                    hx-swap="innerHTML">
                 <p class="text-sm text-gray-400">Chargement...</p>
               </div>
@@ -159,7 +159,7 @@
             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
               <h3 class="font-bold text-lg mb-4">🕒 Ajouts récents</h3>
               <div hx-get="/api/restaurants?limit=5"
-                   hx-trigger="load"
+                   hx-trigger="load, restaurant-added from:body"
                    hx-swap="innerHTML">
                 <p class="text-sm text-gray-400">Chargement...</p>
               </div>

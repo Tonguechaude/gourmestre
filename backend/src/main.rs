@@ -11,7 +11,7 @@ mod db;
 mod models;
 
 use deadpool_postgres::Pool;
-use crate::models::{NewRestaurant, ApiRequest};
+use crate::models::ApiRequest;
 
 #[derive(Clone)]
 struct AppState {
@@ -384,10 +384,44 @@ async fn handle_api(
 
                             match db::create_restaurant(&state.db_pool, user_id, &new_restaurant).await {
                                 Ok(restaurant) => {
-                                    let json = serde_json::to_string(&restaurant).unwrap();
-                                    let mut res = Response::new(Full::from(Bytes::from(json)));
-                                    *res.status_mut() = StatusCode::CREATED;
-                                    res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+                                    let new_form_html = r##"
+                                        <form id="add-restaurant-form" hx-post="/api/restaurants" hx-ext="submitjson" hx-target="#add-restaurant-form" hx-swap="outerHTML"
+                                            class="space-y-4 p-4 bg-gray-50 rounded-xl shadow transition hover:shadow-md border border-gray-100 max-w-lg">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <input name="name" type="text" placeholder="Nom du restaurant" required class="px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition" />
+                                                    <input name="city" type="text" placeholder="Ville" required class="px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition" />
+                                                </div>
+                                                <textarea name="description" placeholder="Avis (optionnel)" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition"></textarea>
+                                                <div class="flex items-center gap-4">
+                                                    <label class="flex items-center gap-2">
+                                                        <input name="rating" type="number" min="1" max="5" class="w-16 px-2 py-1 rounded border border-gray-200" />
+                                                        <span class="text-gray-600 text-sm">Note (1–5)</span>
+                                                    </label>
+                                                    <label class="flex items-center gap-2">
+                                                        <input name="is_favorite" type="checkbox" class="rounded border border-gray-300 focus:ring-rose-400" />
+                                                        <span class="text-gray-600 text-sm">Favoris</span>
+                                                    </label>
+                                                </div>
+                                                <button type="submit" class="px-5 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition">Ajouter</button>
+                                        </form>"##;
+
+                                    let success_message_html = format!(
+                                        r#"<div id="resto-msg" hx-swap-oob="true" class="flex items-start space-x-3 p-3 bg-green-50 border border-green-200 rounded-lg animate-fade-in">
+                                                <svg class="h-6 w-6 text-green-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div>
+                                                <p class="font-bold text-green-800">Succès !</p>
+                                                <p class="text-sm text-green-700">Le restaurant '{}' a bien été ajouté.</p>
+                                            </div>
+                                        </div>"#,
+                                        restaurant.name
+                                    );
+
+                                    let final_html = format!("{new_form_html}{success_message_html}");
+
+                                    let mut res = Response::new(Full::from(Bytes::from(final_html)));
+                                    res.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
                                     res.headers_mut().insert("HX-Trigger", HeaderValue::from_static("restaurant-added"));
                                     Ok(res)
                                 },

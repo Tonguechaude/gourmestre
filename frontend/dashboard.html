@@ -99,8 +99,13 @@
               <p class="text-base text-gray-500 mb-6">Bienvenue dans votre espace personnel</p>
 
               <div class="flex-1 space-y-7">
-                <form hx-post="/api/restaurants" hx-ext="submitjson" hx-target="#resto-msg" hx-swap="innerHTML"
-                                                                                            class="space-y-4 p-4 bg-gray-50 rounded-xl shadow transition hover:shadow-md border border-gray-100 max-w-lg">
+                <form id="add-restaurant-form"
+                      hx-post="/api/restaurants"
+                      hx-ext="submitjson"
+                      hx-target="#add-restaurant-form"
+                      hx-swap="outerHTML"
+                      class="space-y-4 p-4 bg-gray-50 rounded-xl shadow transition hover:shadow-md border border-gray-100 max-w-lg">
+
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input name="name" type="text" placeholder="Nom du restaurant" required
                                                    class="px-3 py-2 rounded-lg border border-gray-200 focus:border-rose-400 focus:ring-rose-100 focus:outline-none transition" />
@@ -150,7 +155,7 @@
             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
               <h3 class="font-bold text-lg mb-4">⭐ Derniers favoris</h3>
               <div hx-get="/api/restaurants?favorites=true&limit=5"
-                   hx-trigger="load restaurant-added from:body"
+                   hx-trigger="load, restaurant-added from:body"
                    hx-swap="innerHTML">
                 <p class="text-sm text-gray-400">Chargement...</p>
               </div>
@@ -172,20 +177,6 @@
     </main>
 
     <script>
-    </script>
-
-    <!--
-      AMÉLIORATIONS :
-      - Le panel dashboard prend toute la place, il est centré et moderne, avec une ombre légère.
-      - Les "layers" s'ouvrent par dessus, façon panneau/overlay, pour une UX fluide sans recharger la page.
-      - Formulaire "Ajout rapide" modernisé, inputs plus accessibles et responsive.
-      - Responsive : le panel garde toujours une marge avec la sidebar, même sur mobile.
-      - Accessibilité : navigation par bouton, labels, aria-labels.
-      - Tu peux brancher htmx dans les layers pour charger dynamiquement le contenu sans JS custom.
-      - Pour une expérience mobile optimale, pense à ajouter un menu burger pour la sidebar si nécessaire !
-    -->
-
-    <script>
       htmx.defineExtension('submitjson', {
         onEvent: function (name, evt) {
           if (name === "htmx:configRequest") {
@@ -194,8 +185,8 @@
           }
         },
         encodeParameters: function(xhr, parameters, elt) {
-          xhr.overrideMimeType('text/json') // override default mime type
-          const body = { // set your request body
+          xhr.overrideMimeType('text/json')
+          const body = {
             data: parameters,
             options: { submissionFormat: 'pretty'}
           }
@@ -203,7 +194,14 @@
         }
       })
 
-      // Petite animation sympa pour les layers (ouvrir/fermer)
+      document.addEventListener('DOMContentLoaded', (event) => {
+        htmx.on('#add-restaurant-form', 'htmx:afterSettle', function (evt) {
+          if (evt.detail.successful) {
+            evt.target.reset();
+          }
+        });
+      });
+
       function showLayer(layer) {
         closeLayer();
         document.getElementById('layer-' + layer).classList.remove('hidden');
